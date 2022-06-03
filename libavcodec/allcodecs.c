@@ -771,6 +771,7 @@ extern AVCodec ff_libxavs_encoder;
 extern AVCodec ff_libxavs2_encoder;
 extern AVCodec ff_libxvid_encoder;
 extern AVCodec ff_libzvbi_teletext_decoder;
+extern AVCodec ff_libvvenc_encoder;
 
 /* text */
 extern AVCodec ff_bintext_decoder;

@@ -229,6 +229,7 @@ External library support:
   --enable-libcodec2       enable codec2 en/decoding using libcodec2 [no]
   --enable-libdav1d        enable AV1 decoding via libdav1d [no]
   --enable-libvvdec        enable VVC decoding via vvdec [no]
+  --enable-libvvenc        enable VVC encoding via vvenc [no]
   --enable-libopenvvc      enable decoding of vvc video files via libopenVVC [no]
   --enable-libdavs2        enable AVS2 decoding via libdavs2 [no]
   --enable-libdc1394       enable IIDC-1394 grabbing using libdc1394
@@ -1775,6 +1776,7 @@ EXTERNAL_LIBRARY_LIST="
     libcodec2
     libdav1d
     libvvdec
+    libvvenc
     libdc1394
     libdrm
     libflite
@@ -3244,6 +3246,7 @@ libcodec2_encoder_deps="libcodec2"
 libdav1d_decoder_deps="libdav1d"
 libvvdec_decoder_deps="libvvdec"
 libvvdec_decoder_select="vvc_mp4toannexb_bsf"
+libvvenc_encoder_deps="libvvenc"
 libdavs2_decoder_deps="libdavs2"
 libfdk_aac_decoder_deps="libfdk_aac"
 libfdk_aac_encoder_deps="libfdk_aac"
@@ -6366,6 +6369,7 @@ enabled libcaca           && require_pkg_config libcaca caca caca.h caca_create_
 enabled libcodec2         && require libcodec2 codec2/codec2.h codec2_create -lcodec2
 enabled libdav1d          && require_pkg_config libdav1d "dav1d >= 0.5.0" "dav1d/dav1d.h" dav1d_version
 enabled libvvdec          && require_pkg_config libvvdec "libvvdec >= 1.1.0" "vvdec/vvdec.h" vvdec_get_version
+enabled libvvenc          && require_pkg_config libvvenc "libvvenc >= 1.4.0" "vvenc/vvenc.h" vvenc_get_version
 enabled libdavs2          && require_pkg_config libdavs2 "davs2 >= 1.6.0" davs2.h davs2_decoder_open
 enabled libdc1394         && require_pkg_config libdc1394 libdc1394-2 dc1394/dc1394.h dc1394_new
 enabled libdrm            && require_pkg_config libdrm libdrm xf86drm.h drmGetVersion
