@@ -14,6 +14,7 @@ typedef struct {
     vvencEncoder* encoder;
     vvencYUVBuffer* yuvbuf;
     vvencAccessUnit* au;
+    int64_t numFrames;
     bool encDone;
 } VVEnCContext;
 
@@ -113,14 +114,11 @@ static av_cold int ff_vvenc_encode_frame(AVCodecContext *avctx, AVPacket *avpkt,
                 ff_vvenc_expand_bytes(frame->data[i], q->yuvbuf->planes[i].ptr, q->yuvbuf->planes[i].height * frame->linesize[i]);
             }
         }
-
-        q->yuvbuf->sequenceNumber = avctx->frame_number;
-
-        if(frame->pts != AV_NOPTS_VALUE) {
-            q->yuvbuf->cts      = av_rescale_q(frame->pts, avctx->time_base, av_make_q(1, q->params.m_TicksPerSecond));
-            q->yuvbuf->ctsValid = true;
-        }
     }
+
+    q->yuvbuf->sequenceNumber = q->numFrames;
+    q->yuvbuf->cts            = q->numFrames * q->params.m_TicksPerSecond * q->params.m_FrameScale / q->params.m_FrameRate;
+    q->yuvbuf->ctsValid       = true;
 
     if(vvenc_encode(q->encoder, frame ? q->yuvbuf : NULL, q->au, &q->encDone) < 0) {
         return -1;
@@ -130,8 +128,7 @@ static av_cold int ff_vvenc_encode_frame(AVCodecContext *avctx, AVPacket *avpkt,
     if (pktSize > 0) {
         ff_alloc_packet2(avctx, avpkt, pktSize, 0);
 
-        avpkt->dts = !q->au->dtsValid ? AV_NOPTS_VALUE : av_rescale_q(q->au->dts, av_make_q(1, q->params.m_TicksPerSecond), avctx->time_base);
-        avpkt->pts = !q->au->ctsValid ? AV_NOPTS_VALUE : av_rescale_q(q->au->cts, av_make_q(1, q->params.m_TicksPerSecond), avctx->time_base);
+        avpkt->dts = avpkt->pts = av_rescale(q->numFrames, avctx->time_base.den * q->params.m_FrameScale, avctx->time_base.num * q->params.m_FrameRate);
 
         if (q->au->refPic) {
             avpkt->flags = AV_PKT_FLAG_KEY;
@@ -141,6 +138,7 @@ static av_cold int ff_vvenc_encode_frame(AVCodecContext *avctx, AVPacket *avpkt,
         *got_packet_ptr = 1;
     }
 
+    ++q->numFrames;
     return q->encDone ? AVERROR_EOF : 0;
 }
 
