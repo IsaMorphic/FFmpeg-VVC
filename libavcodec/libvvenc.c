@@ -15,6 +15,7 @@ typedef struct {
     vvencYUVBuffer* yuvbuf;
     vvencAccessUnit* au;
     int64_t numFrames;
+    int64_t frameDelay;
     bool encDone;
 } VVEnCContext;
 
@@ -59,6 +60,7 @@ static av_cold void ff_vvenc_expand_bytes(uint8_t* src, int16_t* dst, int64_t n)
 static av_cold int ff_vvenc_encode_init(AVCodecContext *avctx)
 {
     VVEnCContext *q = avctx->priv_data;
+    q->frameDelay = -1;
     vvenc_init_default (&q->params, avctx->width, avctx->height, avctx->framerate.num, avctx->bit_rate, avctx->global_quality, VVENC_FASTER);
 
     q->params.m_verbosity = VVENC_DETAILS;
@@ -128,11 +130,15 @@ static av_cold int ff_vvenc_encode_frame(AVCodecContext *avctx, AVPacket *avpkt,
     if (pktSize > 0) {
         ff_alloc_packet2(avctx, avpkt, pktSize, 0);
 
-        avpkt->dts = avpkt->pts = av_rescale(q->numFrames, avctx->time_base.den * q->params.m_FrameScale, avctx->time_base.num * q->params.m_FrameRate);
+        if(q->frameDelay < 0) {
+            q->frameDelay = q->numFrames + q->params.m_FrameRate / q->params.m_FrameScale;
+        }
 
         if (q->au->refPic) {
             avpkt->flags = AV_PKT_FLAG_KEY;
         }
+
+        avpkt->dts = avpkt->pts = av_rescale(q->numFrames - q->frameDelay, avctx->time_base.den * q->params.m_FrameScale, avctx->time_base.num * q->params.m_FrameRate);
 
         memcpy(avpkt->data, q->au->payload, pktSize);
         *got_packet_ptr = 1;
